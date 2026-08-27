@@ -24,7 +24,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Generate resources
-        run: go run github.com/tc-hib/go-winres@v0.3.3 simply --arch ${{ matrix.arch }} --out rsrc --manifest gui --product-name CatLock --file-description "A keyboard lock for cats" --icon assets/catlock.png
+        run: go run github.com/tc-hib/go-winres@v0.3.3 make --in winres/winres.json --arch ${{ matrix.arch }} --out rsrc --file-version ${{ github.ref_name }} --product-version ${{ github.ref_name }}
 
       - name: Build
         env:
