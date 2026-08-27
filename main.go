@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var version = "dev"
+
 func main() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()

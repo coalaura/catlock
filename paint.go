@@ -149,6 +149,23 @@ func (app *Application) paint(hwnd uintptr) {
 		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
+	versionArea := Rect{
+		left:   width - 158,
+		top:    62,
+		right:  width - 28,
+		bottom: 78,
+	}
+
+	drawText(
+		hdc,
+		version,
+		versionArea,
+		9,
+		400,
+		quiet,
+		dtRight|dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
 	headerSeparator := Rect{
 		left:   28,
 		top:    88,
