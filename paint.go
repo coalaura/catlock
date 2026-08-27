@@ -61,24 +61,43 @@ func (app *Application) paint(hwnd uintptr) {
 	mark := Rect{
 		left:   28,
 		top:    24,
-		right:  68,
-		bottom: 64,
+		right:  72,
+		bottom: 68,
 	}
 
 	fillRect(hdc, mark, surfaceRaised)
 
-	drawText(
-		hdc,
-		"C",
-		mark,
-		18,
-		600,
-		accent,
-		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
-	)
+	leftEar := Rect{left: 36, top: 32, right: 43, bottom: 42}
+	rightEar := Rect{left: 57, top: 32, right: 64, bottom: 42}
+	catHead := Rect{left: 36, top: 39, right: 64, bottom: 60}
+	leftEye := Rect{left: 42, top: 46, right: 45, bottom: 49}
+	rightEye := Rect{left: 55, top: 46, right: 58, bottom: 49}
+	nose := Rect{left: 49, top: 52, right: 52, bottom: 55}
+
+	whiskers := [...]Rect{
+		{left: 31, top: 51, right: 35, bottom: 52},
+		{left: 35, top: 52, right: 40, bottom: 53},
+		{left: 31, top: 57, right: 35, bottom: 58},
+		{left: 35, top: 56, right: 40, bottom: 57},
+		{left: 60, top: 52, right: 65, bottom: 53},
+		{left: 65, top: 51, right: 69, bottom: 52},
+		{left: 60, top: 56, right: 65, bottom: 57},
+		{left: 65, top: 57, right: 69, bottom: 58},
+	}
+
+	fillRect(hdc, leftEar, accent)
+	fillRect(hdc, rightEar, accent)
+	fillRect(hdc, catHead, accent)
+	fillRect(hdc, leftEye, background)
+	fillRect(hdc, rightEye, background)
+	fillRect(hdc, nose, foreground)
+
+	for _, whisker := range whiskers {
+		fillRect(hdc, whisker, accent)
+	}
 
 	title := Rect{
-		left:   84,
+		left:   88,
 		top:    20,
 		right:  width - 180,
 		bottom: 47,
@@ -86,7 +105,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Keyboard input paused",
+		"Keyboard locked",
 		title,
 		21,
 		600,
@@ -95,7 +114,7 @@ func (app *Application) paint(hwnd uintptr) {
 	)
 
 	subtitle := Rect{
-		left:   84,
+		left:   88,
 		top:    47,
 		right:  width - 180,
 		bottom: 70,
@@ -103,7 +122,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Other applications will not receive typed input.",
+		"Anything typed now is captured here, not sent to other apps.",
 		subtitle,
 		12,
 		400,
@@ -122,7 +141,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"LOCK ACTIVE",
+		"CATLOCK ACTIVE",
 		state,
 		11,
 		600,
@@ -179,7 +198,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"KEY PRESSES CAPTURED",
+		"KEY PRESSES CAUGHT",
 		metricLabel,
 		10,
 		600,
@@ -239,7 +258,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Stored locally and opened automatically when you unlock.",
+		"Kept locally and opened when CatLock is released.",
 		fileHint,
 		11,
 		400,
@@ -269,7 +288,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Unlock keyboard",
+		"Release keyboard",
 		app.button,
 		13,
 		600,
@@ -286,7 +305,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Emergency shortcut",
+		"Emergency release",
 		shortcutLabel,
 		10,
 		600,
