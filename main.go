@@ -21,11 +21,6 @@ func main() {
 }
 
 func run() error {
-	result, _, lastErr := procSetProcessDPIAware.Call()
-	if result == 0 {
-		return win32Error("SetProcessDPIAware", lastErr)
-	}
-
 	started := time.Now()
 
 	file, capturePath, err := createCaptureFile(started)

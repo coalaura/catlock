@@ -27,6 +27,7 @@ Key presses are saved only on your computer under `%LocalAppData%\CatLock\Captur
 
 CatLock requires Go 1.27 or newer.
 
-```bash
-go build -trimpath -o catlock.exe .
+```powershell
+go generate ./...
+go build -trimpath -ldflags="-H=windowsgui" -o catlock.exe .
 ```

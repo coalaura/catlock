@@ -189,7 +189,6 @@ var (
 	procPostQuitMessage     = user32.NewProc("PostQuitMessage")
 	procRegisterClassExW    = user32.NewProc("RegisterClassExW")
 	procScreenToClient      = user32.NewProc("ScreenToClient")
-	procSetProcessDPIAware  = user32.NewProc("SetProcessDPIAware")
 	procSetTimer            = user32.NewProc("SetTimer")
 	procSetWindowPos        = user32.NewProc("SetWindowPos")
 	procSetWindowsHookExW   = user32.NewProc("SetWindowsHookExW")

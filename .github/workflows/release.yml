@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Generate resources
+        run: go run github.com/tc-hib/go-winres@v0.3.3 simply --arch ${{ matrix.arch }} --out rsrc --manifest gui --product-name CatLock --file-description "A keyboard lock for cats" --icon assets/catlock.png
+
+      - name: Build
+        env:
+          GOARCH: ${{ matrix.arch }}
+        run: go build -trimpath -ldflags="-s -w -H=windowsgui -X main.version=${{ github.ref_name }}" -o "catlock-windows-${{ matrix.arch }}.exe" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: catlock-windows-${{ matrix.arch }}
+          path: catlock-windows-${{ matrix.arch }}.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
