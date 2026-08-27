@@ -103,8 +103,8 @@ const (
 	transparent      = 1
 	cleartypeQuality = 5
 
-	preferredWidth  int32 = 660
-	preferredHeight int32 = 286
+	preferredWidth  int32 = 700
+	preferredHeight int32 = 350
 	preferredMargin int32 = 32
 )
 

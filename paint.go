@@ -21,186 +21,255 @@ func (app *Application) paint(hwnd uintptr) {
 
 	procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
 
-	background := rgb(32, 32, 32)
-	surface := rgb(44, 44, 44)
-	border := rgb(63, 63, 63)
-	separator := rgb(55, 55, 55)
-	foreground := rgb(243, 243, 243)
-	secondary := rgb(174, 174, 174)
-	quiet := rgb(139, 139, 139)
-	accent := rgb(204, 36, 29) // Gruvbox red.
-	button := rgb(15, 108, 189)
-	buttonText := rgb(255, 255, 255)
+	background := rgb(27, 32, 39)
+	surface := rgb(36, 43, 52)
+	surfaceRaised := rgb(42, 50, 60)
+	border := rgb(73, 83, 96)
+	separator := rgb(53, 62, 73)
+	foreground := rgb(235, 239, 243)
+	secondary := rgb(169, 179, 190)
+	quiet := rgb(126, 138, 151)
+	accent := rgb(105, 172, 158)
+	accentSurface := rgb(38, 69, 66)
+	button := rgb(66, 111, 123)
+	buttonText := rgb(247, 250, 251)
 
 	width := client.right - client.left
 	height := client.bottom - client.top
 
-	// A one-pixel border provides definition without a traditional title bar.
+	// The layered edge and class drop shadow distinguish the frameless window.
 	fillRect(hdc, client, border)
 
 	panel := Rect{
-		left:   1,
-		top:    1,
-		right:  width - 1,
-		bottom: height - 1,
+		left:   2,
+		top:    2,
+		right:  width - 2,
+		bottom: height - 2,
 	}
 
 	fillRect(hdc, panel, background)
 
-	accentBar := Rect{
-		left:   1,
-		top:    1,
-		right:  6,
-		bottom: height - 1,
+	topAccent := Rect{
+		left:   2,
+		top:    2,
+		right:  width - 2,
+		bottom: 5,
 	}
 
-	fillRect(hdc, accentBar, accent)
+	fillRect(hdc, topAccent, accent)
+
+	mark := Rect{
+		left:   28,
+		top:    24,
+		right:  68,
+		bottom: 64,
+	}
+
+	fillRect(hdc, mark, surfaceRaised)
+
+	drawText(
+		hdc,
+		"C",
+		mark,
+		18,
+		600,
+		accent,
+		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
+	)
 
 	title := Rect{
-		left:   28,
-		top:    17,
-		right:  width / 2,
-		bottom: 52,
+		left:   84,
+		top:    20,
+		right:  width - 180,
+		bottom: 47,
 	}
 
 	drawText(
 		hdc,
-		"Keyboard locked",
+		"Keyboard input paused",
 		title,
-		23,
+		21,
 		600,
 		foreground,
+		dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
+	subtitle := Rect{
+		left:   84,
+		top:    47,
+		right:  width - 180,
+		bottom: 70,
+	}
+
+	drawText(
+		hdc,
+		"Other applications will not receive typed input.",
+		subtitle,
+		12,
+		400,
+		secondary,
 		dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
 	state := Rect{
-		left:   width / 2,
-		top:    17,
-		right:  width - 24,
-		bottom: 52,
+		left:   width - 158,
+		top:    30,
+		right:  width - 28,
+		bottom: 58,
 	}
+
+	fillRect(hdc, state, accentSurface)
 
 	drawText(
 		hdc,
-		"RECORDING LOCALLY",
+		"LOCK ACTIVE",
 		state,
-		12,
+		11,
 		600,
 		accent,
-		dtRight|dtVCenter|dtSingleLine|dtNoPrefix,
+		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
 	headerSeparator := Rect{
 		left:   28,
-		top:    62,
-		right:  width - 24,
-		bottom: 63,
+		top:    88,
+		right:  width - 28,
+		bottom: 89,
 	}
 
 	fillRect(hdc, headerSeparator, separator)
 
-	description := Rect{
+	statusCard := Rect{
 		left:   28,
-		top:    73,
+		top:    108,
 		right:  width - 28,
-		bottom: 105,
+		bottom: 242,
+	}
+
+	fillRect(hdc, statusCard, surface)
+
+	cardAccent := statusCard
+	cardAccent.bottom = cardAccent.top + 3
+
+	fillRect(hdc, cardAccent, accent)
+
+	metric := Rect{
+		left:   46,
+		top:    127,
+		right:  214,
+		bottom: 174,
 	}
 
 	drawText(
 		hdc,
-		"Input is captured here and will not reach your other applications.",
-		description,
-		15,
-		400,
-		secondary,
-		dtVCenter|dtSingleLine|dtNoPrefix,
-	)
-
-	status := Rect{
-		left:   28,
-		top:    116,
-		right:  width - 24,
-		bottom: 158,
-	}
-
-	fillRect(hdc, status, surface)
-
-	statusLabel := status
-	statusLabel.left += 14
-	statusLabel.right = width / 2
-
-	drawText(
-		hdc,
-		"Captured input",
-		statusLabel,
-		13,
-		400,
-		secondary,
-		dtVCenter|dtSingleLine|dtNoPrefix,
-	)
-
-	count := status
-	count.left = width / 2
-	count.right -= 14
-
-	drawText(
-		hdc,
-		fmt.Sprintf("%d key presses", app.keyCount),
-		count,
-		14,
+		fmt.Sprintf("%d", app.keyCount),
+		metric,
+		27,
 		600,
 		foreground,
-		dtRight|dtVCenter|dtSingleLine|dtNoPrefix,
+		dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
+	metricLabel := Rect{
+		left:   46,
+		top:    174,
+		right:  214,
+		bottom: 205,
+	}
+
+	drawText(
+		hdc,
+		"KEY PRESSES CAPTURED",
+		metricLabel,
+		10,
+		600,
+		quiet,
+		dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
+	cardSeparator := Rect{
+		left:   226,
+		top:    128,
+		right:  227,
+		bottom: 222,
+	}
+
+	fillRect(hdc, cardSeparator, separator)
+
 	pathLabel := Rect{
-		left:   28,
-		top:    170,
-		right:  width - 28,
-		bottom: 190,
+		left:   248,
+		top:    126,
+		right:  width - 48,
+		bottom: 150,
 	}
 
 	drawText(
 		hdc,
 		"Capture file",
 		pathLabel,
-		12,
+		11,
 		600,
 		quiet,
 		dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
 	pathArea := Rect{
-		left:   28,
-		top:    191,
-		right:  width - 28,
-		bottom: 218,
+		left:   248,
+		top:    150,
+		right:  width - 48,
+		bottom: 182,
 	}
 
 	drawText(
 		hdc,
 		app.capturePath,
 		pathArea,
-		13,
+		12,
 		400,
-		secondary,
+		foreground,
 		dtVCenter|dtSingleLine|dtPathEllipsis|dtNoPrefix,
 	)
 
-	buttonWidth := min(int32(184), width/2)
+	fileHint := Rect{
+		left:   248,
+		top:    188,
+		right:  width - 48,
+		bottom: 218,
+	}
+
+	drawText(
+		hdc,
+		"Stored locally and opened automatically when you unlock.",
+		fileHint,
+		11,
+		400,
+		secondary,
+		dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
+	footerSeparator := Rect{
+		left:   28,
+		top:    height - 88,
+		right:  width - 28,
+		bottom: height - 87,
+	}
+
+	fillRect(hdc, footerSeparator, separator)
+
+	buttonWidth := min(int32(190), width/2)
 
 	app.button = Rect{
-		left:   width - buttonWidth - 20,
-		top:    height - 48,
-		right:  width - 20,
-		bottom: height - 16,
+		left:   width - buttonWidth - 28,
+		top:    height - 64,
+		right:  width - 28,
+		bottom: height - 24,
 	}
 
 	fillRect(hdc, app.button, button)
 
 	drawText(
 		hdc,
-		"Unlock",
+		"Unlock keyboard",
 		app.button,
 		13,
 		600,
@@ -208,20 +277,37 @@ func (app *Application) paint(hwnd uintptr) {
 		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
-	emergency := Rect{
+	shortcutLabel := Rect{
+		left:   28,
+		top:    height - 70,
+		right:  app.button.left - 16,
+		bottom: height - 48,
+	}
+
+	drawText(
+		hdc,
+		"Emergency shortcut",
+		shortcutLabel,
+		10,
+		600,
+		quiet,
+		dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
+	shortcut := Rect{
 		left:   28,
 		top:    height - 48,
 		right:  app.button.left - 16,
-		bottom: height - 16,
+		bottom: height - 24,
 	}
 
 	drawText(
 		hdc,
 		"Ctrl + Alt + Shift + F12",
-		emergency,
+		shortcut,
 		12,
-		400,
-		quiet,
+		600,
+		secondary,
 		dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 }
