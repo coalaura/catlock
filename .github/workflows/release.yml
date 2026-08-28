@@ -30,7 +30,7 @@ jobs:
           go run github.com/tc-hib/go-winres@v0.3.3 make \
             --in winres/winres.json \
             --arch "${{ matrix.arch }}" \
-            --out rsrc \
+            --out internal/windows/rsrc \
             --file-version "${{ github.ref_name }}" \
             --product-version "${{ github.ref_name }}"
 

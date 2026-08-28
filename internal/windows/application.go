@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package windows
 
 import "unsafe"
 
@@ -11,6 +11,7 @@ type Application struct {
 	capture     *CaptureLog
 	capturePath string
 	keyCount    uint64
+	version     string
 
 	button Rect
 

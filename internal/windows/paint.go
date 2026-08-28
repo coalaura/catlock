@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package windows
 
 import (
 	"fmt"
@@ -158,7 +158,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		version,
+		app.version,
 		versionArea,
 		9,
 		400,
