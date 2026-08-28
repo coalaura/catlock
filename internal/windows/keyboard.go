@@ -118,6 +118,7 @@ func (app *Application) keyText(virtualKey uint32) string {
 
 	if virtualKey >= 'A' && virtualKey <= 'Z' {
 		letter := byte(virtualKey)
+
 		if app.shift == app.caps {
 			letter += 'a' - 'A'
 		}

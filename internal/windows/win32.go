@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -233,7 +234,7 @@ func utf16Ptr(text string) *uint16 {
 }
 
 func win32Error(operation string, lastErr error) error {
-	if lastErr == nil || lastErr == syscall.Errno(0) {
+	if lastErr == nil || errors.Is(lastErr, syscall.Errno(0)) {
 		return fmt.Errorf("%s failed", operation)
 	}
 

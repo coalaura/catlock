@@ -54,8 +54,44 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  build-linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          go build \
+            -trimpath \
+            -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o "catlock-linux-${{ matrix.arch }}" \
+            .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: catlock-linux-${{ matrix.arch }}
+          path: catlock-linux-${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 1
+
   sign:
-    needs: build
+    needs: [build, build-linux]
     runs-on: ubuntu-26.04
 
     steps:
@@ -178,7 +214,7 @@ jobs:
 
           (
             cd dist
-            sha256sum -b catlock-windows-*.exe > SHA256SUMS
+            sha256sum -b catlock-* > SHA256SUMS
           )
 
           openssl pkcs12 \
@@ -240,6 +276,7 @@ jobs:
           name: release
           path: |
             dist/catlock-windows-*.exe
+            dist/catlock-linux-*
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           if-no-files-found: error
