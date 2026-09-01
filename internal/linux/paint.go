@@ -34,6 +34,7 @@ type Renderer struct {
 	regular *opentype.Font
 	bold    *opentype.Font
 	faces   map[fontSpec]font.Face
+	scale   int
 }
 
 type pixelEncoder struct {
@@ -45,7 +46,7 @@ type pixelEncoder struct {
 	blue          [256]uint32
 }
 
-func newRenderer() (*Renderer, error) {
+func newRenderer(scale int) (*Renderer, error) {
 	regular, err := opentype.Parse(goregular.TTF)
 	if err != nil {
 		return nil, fmt.Errorf("parse regular UI font: %w", err)
@@ -60,6 +61,7 @@ func newRenderer() (*Renderer, error) {
 		regular: regular,
 		bold:    bold,
 		faces:   make(map[fontSpec]font.Face),
+		scale:   scale,
 	}, nil
 }
 
@@ -85,14 +87,16 @@ func (renderer *Renderer) face(size, weight int) (font.Face, error) {
 		source = renderer.bold
 	}
 
+	pixelSize := size * renderer.scale
+
 	face, err := opentype.NewFace(source, &opentype.FaceOptions{
-		Size:    float64(size) * 72 / 96,
+		Size:    float64(pixelSize) * 72 / 96,
 		DPI:     96,
 		Hinting: font.HintingFull,
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("create %dpx UI font: %w", size, err)
+		return nil, fmt.Errorf("create %dpx UI font: %w", pixelSize, err)
 	}
 
 	renderer.faces[spec] = face
@@ -144,9 +148,10 @@ func (app *Application) paint() error {
 }
 
 func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
-	width := int(app.width)
-	height := int(app.height)
-	frame := image.NewRGBA(image.Rect(0, 0, width, height))
+	frame := image.NewRGBA(image.Rect(0, 0, int(app.width), int(app.height)))
+
+	width := int(app.width) / renderer.scale
+	height := int(app.height) / renderer.scale
 
 	background := color.RGBA{R: 27, G: 32, B: 39, A: 255}
 	surface := color.RGBA{R: 36, G: 43, B: 52, A: 255}
@@ -161,10 +166,10 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	button := color.RGBA{R: 66, G: 111, B: 123, A: 255}
 	buttonText := color.RGBA{R: 247, G: 250, B: 251, A: 255}
 
-	fillRect(frame, Rect{left: 0, top: 0, right: width, bottom: height}, border)
-	fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: height - 2}, background)
-	fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: 5}, accent)
-	fillRect(frame, Rect{left: 28, top: 24, right: 72, bottom: 68}, surfaceRaised)
+	renderer.fillRect(frame, Rect{left: 0, top: 0, right: width, bottom: height}, border)
+	renderer.fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: height - 2}, background)
+	renderer.fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: 5}, accent)
+	renderer.fillRect(frame, Rect{left: 28, top: 24, right: 72, bottom: 68}, surfaceRaised)
 
 	leftEar := Rect{left: 36, top: 32, right: 43, bottom: 42}
 	rightEar := Rect{left: 57, top: 32, right: 64, bottom: 42}
@@ -184,15 +189,15 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		{left: 65, top: 57, right: 69, bottom: 58},
 	}
 
-	fillRect(frame, leftEar, accent)
-	fillRect(frame, rightEar, accent)
-	fillRect(frame, catHead, accent)
-	fillRect(frame, leftEye, background)
-	fillRect(frame, rightEye, background)
-	fillRect(frame, nose, foreground)
+	renderer.fillRect(frame, leftEar, accent)
+	renderer.fillRect(frame, rightEar, accent)
+	renderer.fillRect(frame, catHead, accent)
+	renderer.fillRect(frame, leftEye, background)
+	renderer.fillRect(frame, rightEye, background)
+	renderer.fillRect(frame, nose, foreground)
 
 	for _, whisker := range whiskers {
-		fillRect(frame, whisker, accent)
+		renderer.fillRect(frame, whisker, accent)
 	}
 
 	err := renderer.drawText(frame, "Keyboard locked", Rect{left: 88, top: 20, right: width - 180, bottom: 47}, 21, 600, foreground, alignLeft)
@@ -206,7 +211,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	}
 
 	state := Rect{left: width - 158, top: 30, right: width - 28, bottom: 58}
-	fillRect(frame, state, accentSurface)
+	renderer.fillRect(frame, state, accentSurface)
 
 	err = renderer.drawText(frame, "CATLOCK ACTIVE", state, 11, 600, accent, alignCenter)
 	if err != nil {
@@ -218,11 +223,12 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		return nil, err
 	}
 
-	fillRect(frame, Rect{left: 28, top: 88, right: width - 28, bottom: 89}, separator)
+	renderer.fillRect(frame, Rect{left: 28, top: 88, right: width - 28, bottom: 89}, separator)
 
 	statusCard := Rect{left: 28, top: 108, right: width - 28, bottom: 242}
-	fillRect(frame, statusCard, surface)
-	fillRect(frame, Rect{left: statusCard.left, top: statusCard.top, right: statusCard.right, bottom: statusCard.top + 3}, accent)
+
+	renderer.fillRect(frame, statusCard, surface)
+	renderer.fillRect(frame, Rect{left: statusCard.left, top: statusCard.top, right: statusCard.right, bottom: statusCard.top + 3}, accent)
 
 	err = renderer.drawText(frame, fmt.Sprintf("%d", app.keyCount), Rect{left: 46, top: 127, right: 214, bottom: 174}, 27, 600, foreground, alignLeft)
 	if err != nil {
@@ -234,7 +240,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		return nil, err
 	}
 
-	fillRect(frame, Rect{left: 226, top: 128, right: 227, bottom: 222}, separator)
+	renderer.fillRect(frame, Rect{left: 226, top: 128, right: 227, bottom: 222}, separator)
 
 	err = renderer.drawText(frame, "Capture file", Rect{left: 248, top: 126, right: width - 48, bottom: 150}, 11, 600, quiet, alignLeft)
 	if err != nil {
@@ -247,7 +253,8 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	}
 
 	pathArea := Rect{left: 248, top: 150, right: width - 48, bottom: 182}
-	path := fitPath(app.capturePath, pathFace, pathArea.right-pathArea.left)
+
+	path := fitPath(app.capturePath, pathFace, (pathArea.right-pathArea.left)*renderer.scale)
 
 	err = renderer.drawText(frame, path, pathArea, 12, 400, foreground, alignLeft)
 	if err != nil {
@@ -259,7 +266,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		return nil, err
 	}
 
-	fillRect(frame, Rect{left: 28, top: height - 88, right: width - 28, bottom: height - 87}, separator)
+	renderer.fillRect(frame, Rect{left: 28, top: height - 88, right: width - 28, bottom: height - 87}, separator)
 
 	buttonWidth := min(190, width/2)
 	logButtonWidth := min(150, width/4)
@@ -267,8 +274,8 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	app.button = Rect{left: width - buttonWidth - 28, top: height - 64, right: width - 28, bottom: height - 24}
 	app.logButton = Rect{left: app.button.left - 12 - logButtonWidth, top: height - 64, right: app.button.left - 12, bottom: height - 24}
 
-	fillRect(frame, app.button, button)
-	fillRect(frame, app.logButton, surfaceRaised)
+	renderer.fillRect(frame, app.button, button)
+	renderer.fillRect(frame, app.logButton, surfaceRaised)
 
 	err = renderer.drawText(frame, "Release keyboard", app.button, 13, 600, buttonText, alignCenter)
 	if err != nil {
@@ -297,6 +304,8 @@ func (renderer *Renderer) drawText(frame *image.RGBA, text string, area Rect, si
 	if area.right <= area.left || area.bottom <= area.top {
 		return nil
 	}
+
+	area = renderer.scaleRect(area)
 
 	face, err := renderer.face(size, weight)
 	if err != nil {
@@ -329,8 +338,24 @@ func (renderer *Renderer) drawText(frame *image.RGBA, text string, area Rect, si
 	return nil
 }
 
-func fillRect(frame *image.RGBA, area Rect, fill color.RGBA) {
+func (renderer *Renderer) scaleRect(area Rect) Rect {
+	if renderer.scale == 1 {
+		return area
+	}
+
+	return Rect{
+		left:   area.left * renderer.scale,
+		top:    area.top * renderer.scale,
+		right:  area.right * renderer.scale,
+		bottom: area.bottom * renderer.scale,
+	}
+}
+
+func (renderer *Renderer) fillRect(frame *image.RGBA, area Rect, fill color.RGBA) {
+	area = renderer.scaleRect(area)
+
 	rectangle := image.Rect(area.left, area.top, area.right, area.bottom).Intersect(frame.Bounds())
+
 	if rectangle.Empty() {
 		return
 	}

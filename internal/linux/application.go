@@ -47,6 +47,7 @@ type Application struct {
 	windowY   int16
 	width     uint16
 	height    uint16
+	uiScale   int
 	keyboard  *keyboardMapping
 	renderer  *Renderer
 	pixels    *pixelEncoder
@@ -72,9 +73,10 @@ func (app *Application) runUI() error {
 		return fmt.Errorf("find default X11 screen")
 	}
 
+	app.uiScale = detectUIScale(connection, app.screen)
 	app.refreshMetrics()
 
-	app.renderer, err = newRenderer()
+	app.renderer, err = newRenderer(app.uiScale)
 	if err != nil {
 		return err
 	}
@@ -265,7 +267,7 @@ func (app *Application) handleEvent(event xgb.Event) (bool, bool, error) {
 	case xproto.KeyPressEvent:
 		return true, app.captureKey(event), nil
 	case xproto.ButtonReleaseEvent:
-		point := Point{x: int(event.EventX), y: int(event.EventY)}
+		point := Point{x: int(event.EventX) / app.uiScale, y: int(event.EventY) / app.uiScale}
 
 		if event.Detail != xproto.ButtonIndex1 {
 			return false, false, nil
@@ -314,16 +316,21 @@ func (app *Application) refreshMetrics() {
 	screenWidth := max(int(app.screen.WidthInPixels), 1)
 	screenHeight := max(int(app.screen.HeightInPixels), 1)
 
-	margin := preferredMargin
+	scale := app.uiScale
+
+	margin := preferredMargin * scale
 	if screenWidth <= 2*margin || screenHeight <= 2*margin {
 		margin = 0
 	}
 
-	width := min(preferredWidth, screenWidth-2*margin)
-	height := min(preferredHeight, screenHeight-2*margin)
+	width := min(preferredWidth*scale, screenWidth-2*margin)
+	height := min(preferredHeight*scale, screenHeight-2*margin)
 
-	app.width = uint16(max(width, 1))
-	app.height = uint16(max(height, 1))
+	width -= width % scale
+	height -= height % scale
+
+	app.width = uint16(max(width, scale))
+	app.height = uint16(max(height, scale))
 	app.windowX = int16((screenWidth - int(app.width)) / 2)
 	app.windowY = int16((screenHeight - int(app.height)) / 2)
 }
