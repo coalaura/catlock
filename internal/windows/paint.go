@@ -275,7 +275,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		"Kept locally and opened when CatLock is released.",
+		"Kept locally and opened with the Release + log button.",
 		fileHint,
 		11,
 		400,
@@ -293,6 +293,7 @@ func (app *Application) paint(hwnd uintptr) {
 	fillRect(hdc, footerSeparator, separator)
 
 	buttonWidth := min(int32(190), width/2)
+	logButtonWidth := min(int32(150), width/4)
 
 	app.button = Rect{
 		left:   width - buttonWidth - 28,
@@ -301,7 +302,15 @@ func (app *Application) paint(hwnd uintptr) {
 		bottom: height - 24,
 	}
 
+	app.logButton = Rect{
+		left:   app.button.left - 12 - logButtonWidth,
+		top:    height - 64,
+		right:  app.button.left - 12,
+		bottom: height - 24,
+	}
+
 	fillRect(hdc, app.button, button)
+	fillRect(hdc, app.logButton, surfaceRaised)
 
 	drawText(
 		hdc,
@@ -313,10 +322,20 @@ func (app *Application) paint(hwnd uintptr) {
 		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
 	)
 
+	drawText(
+		hdc,
+		"Release + log",
+		app.logButton,
+		13,
+		600,
+		foreground,
+		dtCenter|dtVCenter|dtSingleLine|dtNoPrefix,
+	)
+
 	shortcutLabel := Rect{
 		left:   28,
 		top:    height - 70,
-		right:  app.button.left - 16,
+		right:  app.logButton.left - 16,
 		bottom: height - 48,
 	}
 
@@ -333,7 +352,7 @@ func (app *Application) paint(hwnd uintptr) {
 	shortcut := Rect{
 		left:   28,
 		top:    height - 48,
-		right:  app.button.left - 16,
+		right:  app.logButton.left - 16,
 		bottom: height - 24,
 	}
 

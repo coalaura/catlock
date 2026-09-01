@@ -254,7 +254,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		return nil, err
 	}
 
-	err = renderer.drawText(frame, "Kept locally and opened when CatLock is released.", Rect{left: 248, top: 188, right: width - 48, bottom: 218}, 11, 400, secondary, alignLeft)
+	err = renderer.drawText(frame, "Kept locally and opened with the Release + log button.", Rect{left: 248, top: 188, right: width - 48, bottom: 218}, 11, 400, secondary, alignLeft)
 	if err != nil {
 		return nil, err
 	}
@@ -262,20 +262,30 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	fillRect(frame, Rect{left: 28, top: height - 88, right: width - 28, bottom: height - 87}, separator)
 
 	buttonWidth := min(190, width/2)
+	logButtonWidth := min(150, width/4)
+
 	app.button = Rect{left: width - buttonWidth - 28, top: height - 64, right: width - 28, bottom: height - 24}
+	app.logButton = Rect{left: app.button.left - 12 - logButtonWidth, top: height - 64, right: app.button.left - 12, bottom: height - 24}
+
 	fillRect(frame, app.button, button)
+	fillRect(frame, app.logButton, surfaceRaised)
 
 	err = renderer.drawText(frame, "Release keyboard", app.button, 13, 600, buttonText, alignCenter)
 	if err != nil {
 		return nil, err
 	}
 
-	err = renderer.drawText(frame, "Emergency release", Rect{left: 28, top: height - 70, right: app.button.left - 16, bottom: height - 48}, 10, 600, quiet, alignLeft)
+	err = renderer.drawText(frame, "Release + log", app.logButton, 13, 600, foreground, alignCenter)
 	if err != nil {
 		return nil, err
 	}
 
-	err = renderer.drawText(frame, "Ctrl + Alt + Shift + F12", Rect{left: 28, top: height - 48, right: app.button.left - 16, bottom: height - 24}, 12, 600, secondary, alignLeft)
+	err = renderer.drawText(frame, "Emergency release", Rect{left: 28, top: height - 70, right: app.logButton.left - 16, bottom: height - 48}, 10, 600, quiet, alignLeft)
+	if err != nil {
+		return nil, err
+	}
+
+	err = renderer.drawText(frame, "Ctrl + Alt + Shift + F12", Rect{left: 28, top: height - 48, right: app.logButton.left - 16, bottom: height - 24}, 12, 600, secondary, alignLeft)
 	if err != nil {
 		return nil, err
 	}

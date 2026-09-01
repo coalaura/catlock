@@ -35,19 +35,21 @@ type Application struct {
 	window     xproto.Window
 	gc         xproto.Gcontext
 
-	capture     *CaptureLog
-	capturePath string
-	keyCount    uint64
-	version     string
+	capture           *CaptureLog
+	capturePath       string
+	keyCount          uint64
+	version           string
+	openCaptureOnExit bool
 
-	button   Rect
-	windowX  int16
-	windowY  int16
-	width    uint16
-	height   uint16
-	keyboard *keyboardMapping
-	renderer *Renderer
-	pixels   *pixelEncoder
+	button    Rect
+	logButton Rect
+	windowX   int16
+	windowY   int16
+	width     uint16
+	height    uint16
+	keyboard  *keyboardMapping
+	renderer  *Renderer
+	pixels    *pixelEncoder
 }
 
 func (area Rect) contains(point Point) bool {
@@ -265,7 +267,21 @@ func (app *Application) handleEvent(event xgb.Event) (bool, bool, error) {
 	case xproto.ButtonReleaseEvent:
 		point := Point{x: int(event.EventX), y: int(event.EventY)}
 
-		return false, event.Detail == xproto.ButtonIndex1 && app.button.contains(point), nil
+		if event.Detail != xproto.ButtonIndex1 {
+			return false, false, nil
+		}
+
+		if app.button.contains(point) {
+			return false, true, nil
+		}
+
+		if app.logButton.contains(point) {
+			app.openCaptureOnExit = true
+
+			return false, true, nil
+		}
+
+		return false, false, nil
 	case xproto.ExposeEvent:
 		return event.Count == 0, false, nil
 	case xproto.MappingNotifyEvent:

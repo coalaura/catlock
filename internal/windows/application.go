@@ -8,12 +8,14 @@ type Application struct {
 	hwnd uintptr
 	hook uintptr
 
-	capture     *CaptureLog
-	capturePath string
-	keyCount    uint64
-	version     string
+	capture           *CaptureLog
+	capturePath       string
+	keyCount          uint64
+	version           string
+	openCaptureOnExit bool
 
-	button Rect
+	button    Rect
+	logButton Rect
 
 	keysDown [256]bool
 	shift    bool
@@ -180,7 +182,11 @@ func windowProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		if result != 0 {
 			procScreenToClient.Call(hwnd, uintptr(unsafe.Pointer(&cursor)))
 
-			if app.button.contains(cursor) {
+			if app.logButton.contains(cursor) {
+				app.openCaptureOnExit = true
+			}
+
+			if app.button.contains(cursor) || app.logButton.contains(cursor) {
 				procPostMessageW.Call(hwnd, wmUnlock, 0, 0)
 			}
 		}

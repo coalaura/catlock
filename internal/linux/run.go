@@ -53,5 +53,9 @@ func run(version string) error {
 		return err
 	}
 
-	return openCaptureFile(capturePath)
+	if app.openCaptureOnExit {
+		return openCaptureFile(capturePath)
+	}
+
+	return nil
 }
