@@ -6,8 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
+
+func (app *Application) runUI() error {
+	if useWayland(os.Getenv("XDG_SESSION_TYPE"), os.Getenv("WAYLAND_DISPLAY")) {
+		return app.runWayland()
+	}
+
+	return app.runX11()
+}
 
 func Run(version string) {
 	err := run(version)
@@ -58,4 +67,8 @@ func run(version string) error {
 	}
 
 	return nil
+}
+
+func useWayland(sessionType, display string) bool {
+	return strings.EqualFold(sessionType, "wayland") || display != ""
 }

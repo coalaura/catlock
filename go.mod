@@ -3,6 +3,7 @@ module github.com/coalaura/catlock
 go 1.27.0
 
 require (
+	github.com/ebitengine/purego v0.11.1
 	github.com/jezek/xgb v1.3.1
 	golang.org/x/image v0.45.0
 	golang.org/x/sys v0.47.0

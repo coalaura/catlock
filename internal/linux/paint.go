@@ -234,12 +234,22 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		return frame, nil
 	}
 
-	err := renderer.drawText(frame, "Keyboard locked", Rect{left: 88, top: 20, right: width - 220, bottom: 47}, 21, 600, foreground, alignLeft)
+	title := "Keyboard locked"
+	subtitle := "Anything typed now is captured here, not sent to other apps."
+	badge := "CATLOCK ACTIVE"
+
+	if app.lockPending {
+		title = "Locking keyboard"
+		subtitle = "Waiting for the desktop to grant exclusive keyboard input."
+		badge = "WAITING"
+	}
+
+	err := renderer.drawText(frame, title, Rect{left: 88, top: 20, right: width - 220, bottom: 47}, 21, 600, foreground, alignLeft)
 	if err != nil {
 		return nil, err
 	}
 
-	err = renderer.drawText(frame, "Anything typed now is captured here, not sent to other apps.", Rect{left: 88, top: 47, right: width - 220, bottom: 70}, 12, 400, secondary, alignLeft)
+	err = renderer.drawText(frame, subtitle, Rect{left: 88, top: 47, right: width - 220, bottom: 70}, 12, 400, secondary, alignLeft)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +257,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	state := Rect{left: width - 198, top: 30, right: width - 68, bottom: 58}
 	renderer.fillRect(frame, state, accentSurface)
 
-	err = renderer.drawText(frame, "CATLOCK ACTIVE", state, 11, 600, accent, alignCenter)
+	err = renderer.drawText(frame, badge, state, 11, 600, accent, alignCenter)
 	if err != nil {
 		return nil, err
 	}

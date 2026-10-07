@@ -48,6 +48,7 @@ type Application struct {
 	logButton    Rect
 	toggleButton Rect
 	compact      bool
+	lockPending  bool
 	windowX      int16
 	windowY      int16
 	width        uint16
@@ -62,7 +63,7 @@ func (area Rect) contains(point Point) bool {
 	return point.x >= area.left && point.x < area.right && point.y >= area.top && point.y < area.bottom
 }
 
-func (app *Application) runUI() error {
+func (app *Application) runX11() error {
 	connection, err := xgb.NewConn()
 	if err != nil {
 		return fmt.Errorf("connect to X11 display: %w", err)
