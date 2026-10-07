@@ -133,6 +133,7 @@ func (mapping *keyboardMapping) symbols(keycode xproto.Keycode) []xproto.Keysym 
 
 	start := (int(keycode) - int(mapping.firstKeycode)) * mapping.keysymsPerCode
 	end := start + mapping.keysymsPerCode
+
 	if start < 0 || end > len(mapping.keysyms) {
 		return nil
 	}

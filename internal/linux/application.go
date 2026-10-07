@@ -14,6 +14,9 @@ const (
 	preferredWidth  = 700
 	preferredHeight = 350
 	preferredMargin = 32
+	compactWidth    = 196
+	compactHeight   = 60
+	compactMargin   = 8
 )
 
 type Rect struct {
@@ -41,16 +44,18 @@ type Application struct {
 	version           string
 	openCaptureOnExit bool
 
-	button    Rect
-	logButton Rect
-	windowX   int16
-	windowY   int16
-	width     uint16
-	height    uint16
-	uiScale   int
-	keyboard  *keyboardMapping
-	renderer  *Renderer
-	pixels    *pixelEncoder
+	button       Rect
+	logButton    Rect
+	toggleButton Rect
+	compact      bool
+	windowX      int16
+	windowY      int16
+	width        uint16
+	height       uint16
+	uiScale      int
+	keyboard     *keyboardMapping
+	renderer     *Renderer
+	pixels       *pixelEncoder
 }
 
 func (area Rect) contains(point Point) bool {
@@ -273,11 +278,17 @@ func (app *Application) handleEvent(event xgb.Event) (bool, bool, error) {
 			return false, false, nil
 		}
 
-		if app.button.contains(point) {
+		if app.toggleButton.contains(point) {
+			err := app.toggleCompact()
+
+			return true, false, err
+		}
+
+		if !app.compact && app.button.contains(point) {
 			return false, true, nil
 		}
 
-		if app.logButton.contains(point) {
+		if !app.compact && app.logButton.contains(point) {
 			app.openCaptureOnExit = true
 
 			return false, true, nil
@@ -319,12 +330,21 @@ func (app *Application) refreshMetrics() {
 	scale := app.uiScale
 
 	margin := preferredMargin * scale
+	width := preferredWidth * scale
+	height := preferredHeight * scale
+
+	if app.compact {
+		margin = compactMargin * scale
+		width = compactWidth * scale
+		height = compactHeight * scale
+	}
+
 	if screenWidth <= 2*margin || screenHeight <= 2*margin {
 		margin = 0
 	}
 
-	width := min(preferredWidth*scale, screenWidth-2*margin)
-	height := min(preferredHeight*scale, screenHeight-2*margin)
+	width = min(width, screenWidth-2*margin)
+	height = min(height, screenHeight-2*margin)
 
 	width -= width % scale
 	height -= height % scale
@@ -333,6 +353,40 @@ func (app *Application) refreshMetrics() {
 	app.height = uint16(max(height, scale))
 	app.windowX = int16((screenWidth - int(app.width)) / 2)
 	app.windowY = int16((screenHeight - int(app.height)) / 2)
+
+	if app.compact {
+		app.windowX = int16(margin)
+		app.windowY = int16(margin)
+	}
+}
+
+func (app *Application) toggleCompact() error {
+	app.compact = !app.compact
+	app.refreshMetrics()
+
+	pixels, err := newPixelEncoder(app.setup, app.screen, int(app.width))
+	if err != nil {
+		return err
+	}
+
+	err = xproto.ConfigureWindowChecked(
+		app.connection,
+		app.window,
+		xproto.ConfigWindowX|xproto.ConfigWindowY|xproto.ConfigWindowWidth|xproto.ConfigWindowHeight,
+		[]uint32{uint32(app.windowX), uint32(app.windowY), uint32(app.width), uint32(app.height)},
+	).Check()
+
+	if err != nil {
+		return fmt.Errorf("resize X11 window: %w", err)
+	}
+
+	app.pixels = pixels
+	// Ignore queued clicks on the old layout until the new one is painted.
+	app.button = Rect{}
+	app.logButton = Rect{}
+	app.toggleButton = Rect{}
+
+	return nil
 }
 
 func (app *Application) raiseWindow() error {

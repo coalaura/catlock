@@ -14,8 +14,10 @@ type Application struct {
 	version           string
 	openCaptureOnExit bool
 
-	button    Rect
-	logButton Rect
+	button       Rect
+	logButton    Rect
+	toggleButton Rect
+	compact      bool
 
 	keysDown [256]bool
 	shift    bool
@@ -145,15 +147,56 @@ func (app *Application) refreshMetrics() {
 	screenHeight := max(systemMetric(smCYScreen), int32(1))
 
 	margin := preferredMargin
+	width := preferredWidth
+	height := preferredHeight
+
+	if app.compact {
+		margin = compactMargin
+		width = compactWidth
+		height = compactHeight
+	}
+
 	if screenWidth <= 2*margin || screenHeight <= 2*margin {
 		margin = 0
 	}
 
-	app.windowWidth = min(preferredWidth, screenWidth-2*margin)
-	app.windowHeight = min(preferredHeight, screenHeight-2*margin)
+	app.windowWidth = min(width, screenWidth-2*margin)
+	app.windowHeight = min(height, screenHeight-2*margin)
 
 	app.windowX = (screenWidth - app.windowWidth) / 2
 	app.windowY = (screenHeight - app.windowHeight) / 2
+
+	if app.compact {
+		app.windowX = margin
+		app.windowY = margin
+	}
+}
+
+func (app *Application) toggleCompact(hwnd uintptr) {
+	app.compact = !app.compact
+	app.refreshMetrics()
+
+	result, _, _ := procSetWindowPos.Call(
+		hwnd,
+		^uintptr(0),
+		uintptr(app.windowX),
+		uintptr(app.windowY),
+		uintptr(app.windowWidth),
+		uintptr(app.windowHeight),
+		swpNoActivate,
+	)
+
+	if result == 0 {
+		app.compact = !app.compact
+		app.refreshMetrics()
+	}
+
+	// Ignore queued clicks on the old layout until the new one is painted.
+	app.button = Rect{}
+	app.logButton = Rect{}
+	app.toggleButton = Rect{}
+
+	procInvalidateRect.Call(hwnd, 0, 0)
 }
 
 func windowProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
@@ -182,11 +225,17 @@ func windowProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		if result != 0 {
 			procScreenToClient.Call(hwnd, uintptr(unsafe.Pointer(&cursor)))
 
-			if app.logButton.contains(cursor) {
+			if app.toggleButton.contains(cursor) {
+				app.toggleCompact(hwnd)
+
+				return 0
+			}
+
+			if !app.compact && app.logButton.contains(cursor) {
 				app.openCaptureOnExit = true
 			}
 
-			if app.button.contains(cursor) || app.logButton.contains(cursor) {
+			if !app.compact && (app.button.contains(cursor) || app.logButton.contains(cursor)) {
 				procPostMessageW.Call(hwnd, wmUnlock, 0, 0)
 			}
 		}

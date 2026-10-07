@@ -25,6 +25,8 @@ The Linux version requires an X11 desktop session. XWayland cannot prevent keybo
 2. Let the paws take over.
 3. Select **Release keyboard** or press `Ctrl + Alt + Shift + F12` when you are ready. Select **Release + log** instead to also open the capture file.
 
+Select the **−** button in the upper-right corner to switch to a compact window near the top-left of the screen, showing only the cat logo, key-press counter and **+** button. Select **+** to restore the regular centered window. The keyboard stays locked and key presses continue to be captured in either view; the emergency release shortcut also works in compact mode.
+
 Key presses are saved only on your computer under `%LocalAppData%\CatLock\Captures` on Windows, or `$XDG_CACHE_HOME/CatLock/Captures` (normally `~/.cache/CatLock/Captures`) on Linux. The capture file is only opened when releasing through **Release + log**.
 
 ## Build

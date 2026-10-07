@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/draw"
 	"math/bits"
+	"strconv"
 
 	"github.com/jezek/xgb/xproto"
 	"golang.org/x/image/font"
@@ -76,6 +77,7 @@ func (renderer *Renderer) close() {
 
 func (renderer *Renderer) face(size, weight int) (font.Face, error) {
 	spec := fontSpec{size: size, weight: weight}
+
 	face, ok := renderer.faces[spec]
 	if ok {
 		return face, nil
@@ -169,24 +171,33 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	renderer.fillRect(frame, Rect{left: 0, top: 0, right: width, bottom: height}, border)
 	renderer.fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: height - 2}, background)
 	renderer.fillRect(frame, Rect{left: 2, top: 2, right: width - 2, bottom: 5}, accent)
-	renderer.fillRect(frame, Rect{left: 28, top: 24, right: 72, bottom: 68}, surfaceRaised)
 
-	leftEar := Rect{left: 36, top: 32, right: 43, bottom: 42}
-	rightEar := Rect{left: 57, top: 32, right: 64, bottom: 42}
-	catHead := Rect{left: 36, top: 39, right: 64, bottom: 60}
-	leftEye := Rect{left: 42, top: 46, right: 45, bottom: 49}
-	rightEye := Rect{left: 55, top: 46, right: 58, bottom: 49}
-	nose := Rect{left: 49, top: 52, right: 52, bottom: 55}
+	markLeft := 28
+	markTop := 24
+
+	if app.compact {
+		markLeft = 8
+		markTop = 8
+	}
+
+	renderer.fillRect(frame, Rect{left: markLeft, top: markTop, right: markLeft + 44, bottom: markTop + 44}, surfaceRaised)
+
+	leftEar := Rect{left: markLeft + 8, top: markTop + 8, right: markLeft + 15, bottom: markTop + 18}
+	rightEar := Rect{left: markLeft + 29, top: markTop + 8, right: markLeft + 36, bottom: markTop + 18}
+	catHead := Rect{left: markLeft + 8, top: markTop + 15, right: markLeft + 36, bottom: markTop + 36}
+	leftEye := Rect{left: markLeft + 14, top: markTop + 22, right: markLeft + 17, bottom: markTop + 25}
+	rightEye := Rect{left: markLeft + 27, top: markTop + 22, right: markLeft + 30, bottom: markTop + 25}
+	nose := Rect{left: markLeft + 21, top: markTop + 28, right: markLeft + 24, bottom: markTop + 31}
 
 	whiskers := [...]Rect{
-		{left: 31, top: 51, right: 35, bottom: 52},
-		{left: 35, top: 52, right: 40, bottom: 53},
-		{left: 31, top: 57, right: 35, bottom: 58},
-		{left: 35, top: 56, right: 40, bottom: 57},
-		{left: 60, top: 52, right: 65, bottom: 53},
-		{left: 65, top: 51, right: 69, bottom: 52},
-		{left: 60, top: 56, right: 65, bottom: 57},
-		{left: 65, top: 57, right: 69, bottom: 58},
+		{left: markLeft + 3, top: markTop + 27, right: markLeft + 7, bottom: markTop + 28},
+		{left: markLeft + 7, top: markTop + 28, right: markLeft + 12, bottom: markTop + 29},
+		{left: markLeft + 3, top: markTop + 33, right: markLeft + 7, bottom: markTop + 34},
+		{left: markLeft + 7, top: markTop + 32, right: markLeft + 12, bottom: markTop + 33},
+		{left: markLeft + 32, top: markTop + 28, right: markLeft + 37, bottom: markTop + 29},
+		{left: markLeft + 37, top: markTop + 27, right: markLeft + 41, bottom: markTop + 28},
+		{left: markLeft + 32, top: markTop + 32, right: markLeft + 37, bottom: markTop + 33},
+		{left: markLeft + 37, top: markTop + 33, right: markLeft + 41, bottom: markTop + 34},
 	}
 
 	renderer.fillRect(frame, leftEar, accent)
@@ -200,17 +211,40 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 		renderer.fillRect(frame, whisker, accent)
 	}
 
-	err := renderer.drawText(frame, "Keyboard locked", Rect{left: 88, top: 20, right: width - 180, bottom: 47}, 21, 600, foreground, alignLeft)
+	app.toggleButton = Rect{left: width - 56, top: 30, right: width - 28, bottom: 58}
+
+	if app.compact {
+		app.toggleButton = Rect{left: width - 36, top: 16, right: width - 8, bottom: 44}
+	}
+
+	renderer.fillRect(frame, app.toggleButton, surfaceRaised)
+	renderer.fillRect(frame, Rect{left: app.toggleButton.left + 8, top: app.toggleButton.top + 13, right: app.toggleButton.right - 8, bottom: app.toggleButton.bottom - 13}, foreground)
+
+	if app.compact {
+		app.button = Rect{}
+		app.logButton = Rect{}
+
+		renderer.fillRect(frame, Rect{left: app.toggleButton.left + 13, top: app.toggleButton.top + 8, right: app.toggleButton.right - 13, bottom: app.toggleButton.bottom - 8}, foreground)
+
+		err := renderer.drawText(frame, strconv.FormatUint(app.keyCount, 10), Rect{left: 60, top: 8, right: width - 44, bottom: 52}, 24, 600, foreground, alignLeft)
+		if err != nil {
+			return nil, err
+		}
+
+		return frame, nil
+	}
+
+	err := renderer.drawText(frame, "Keyboard locked", Rect{left: 88, top: 20, right: width - 220, bottom: 47}, 21, 600, foreground, alignLeft)
 	if err != nil {
 		return nil, err
 	}
 
-	err = renderer.drawText(frame, "Anything typed now is captured here, not sent to other apps.", Rect{left: 88, top: 47, right: width - 180, bottom: 70}, 12, 400, secondary, alignLeft)
+	err = renderer.drawText(frame, "Anything typed now is captured here, not sent to other apps.", Rect{left: 88, top: 47, right: width - 220, bottom: 70}, 12, 400, secondary, alignLeft)
 	if err != nil {
 		return nil, err
 	}
 
-	state := Rect{left: width - 158, top: 30, right: width - 28, bottom: 58}
+	state := Rect{left: width - 198, top: 30, right: width - 68, bottom: 58}
 	renderer.fillRect(frame, state, accentSurface)
 
 	err = renderer.drawText(frame, "CATLOCK ACTIVE", state, 11, 600, accent, alignCenter)
@@ -230,7 +264,7 @@ func (renderer *Renderer) render(app *Application) (*image.RGBA, error) {
 	renderer.fillRect(frame, statusCard, surface)
 	renderer.fillRect(frame, Rect{left: statusCard.left, top: statusCard.top, right: statusCard.right, bottom: statusCard.top + 3}, accent)
 
-	err = renderer.drawText(frame, fmt.Sprintf("%d", app.keyCount), Rect{left: 46, top: 127, right: 214, bottom: 174}, 27, 600, foreground, alignLeft)
+	err = renderer.drawText(frame, strconv.FormatUint(app.keyCount, 10), Rect{left: 46, top: 127, right: 214, bottom: 174}, 27, 600, foreground, alignLeft)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +439,7 @@ func newPixelEncoder(setup *xproto.SetupInfo, screen *xproto.ScreenInfo, width i
 			candidate := &depth.Visuals[visualIndex]
 			if candidate.VisualId == screen.RootVisual {
 				visual = candidate
+
 				break
 			}
 		}
@@ -424,6 +459,7 @@ func newPixelEncoder(setup *xproto.SetupInfo, screen *xproto.ScreenInfo, width i
 		candidate := &setup.PixmapFormats[formatIndex]
 		if candidate.Depth == screen.RootDepth {
 			format = candidate
+
 			break
 		}
 	}

@@ -33,6 +33,7 @@ func TestSelectedKeysymUsesShiftAndCapsLock(t *testing.T) {
 	}
 
 	state := uint16(xproto.ModMaskShift | xproto.ModMaskLock)
+
 	actual = mapping.selectedKeysym(testKeycode, state)
 	if actual != 'a' {
 		t.Fatalf("shifted caps-lock keysym = %#x, want a", actual)
@@ -69,6 +70,7 @@ func TestSelectedKeysymUsesNumLock(t *testing.T) {
 	}
 
 	state := uint16(xproto.ModMask2 | xproto.ModMaskShift)
+
 	actual = mapping.selectedKeysym(testKeycode, state)
 	if actual != testKeypadEnd {
 		t.Fatalf("shifted num-lock keysym = %#x, want keypad end", actual)

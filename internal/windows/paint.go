@@ -3,7 +3,7 @@
 package windows
 
 import (
-	"fmt"
+	"strconv"
 	"unsafe"
 )
 
@@ -58,31 +58,33 @@ func (app *Application) paint(hwnd uintptr) {
 
 	fillRect(hdc, topAccent, accent)
 
-	mark := Rect{
-		left:   28,
-		top:    24,
-		right:  72,
-		bottom: 68,
+	markLeft := int32(28)
+	markTop := int32(24)
+
+	if app.compact {
+		markLeft = 8
+		markTop = 8
 	}
 
+	mark := Rect{left: markLeft, top: markTop, right: markLeft + 44, bottom: markTop + 44}
 	fillRect(hdc, mark, surfaceRaised)
 
-	leftEar := Rect{left: 36, top: 32, right: 43, bottom: 42}
-	rightEar := Rect{left: 57, top: 32, right: 64, bottom: 42}
-	catHead := Rect{left: 36, top: 39, right: 64, bottom: 60}
-	leftEye := Rect{left: 42, top: 46, right: 45, bottom: 49}
-	rightEye := Rect{left: 55, top: 46, right: 58, bottom: 49}
-	nose := Rect{left: 49, top: 52, right: 52, bottom: 55}
+	leftEar := Rect{left: markLeft + 8, top: markTop + 8, right: markLeft + 15, bottom: markTop + 18}
+	rightEar := Rect{left: markLeft + 29, top: markTop + 8, right: markLeft + 36, bottom: markTop + 18}
+	catHead := Rect{left: markLeft + 8, top: markTop + 15, right: markLeft + 36, bottom: markTop + 36}
+	leftEye := Rect{left: markLeft + 14, top: markTop + 22, right: markLeft + 17, bottom: markTop + 25}
+	rightEye := Rect{left: markLeft + 27, top: markTop + 22, right: markLeft + 30, bottom: markTop + 25}
+	nose := Rect{left: markLeft + 21, top: markTop + 28, right: markLeft + 24, bottom: markTop + 31}
 
 	whiskers := [...]Rect{
-		{left: 31, top: 51, right: 35, bottom: 52},
-		{left: 35, top: 52, right: 40, bottom: 53},
-		{left: 31, top: 57, right: 35, bottom: 58},
-		{left: 35, top: 56, right: 40, bottom: 57},
-		{left: 60, top: 52, right: 65, bottom: 53},
-		{left: 65, top: 51, right: 69, bottom: 52},
-		{left: 60, top: 56, right: 65, bottom: 57},
-		{left: 65, top: 57, right: 69, bottom: 58},
+		{left: markLeft + 3, top: markTop + 27, right: markLeft + 7, bottom: markTop + 28},
+		{left: markLeft + 7, top: markTop + 28, right: markLeft + 12, bottom: markTop + 29},
+		{left: markLeft + 3, top: markTop + 33, right: markLeft + 7, bottom: markTop + 34},
+		{left: markLeft + 7, top: markTop + 32, right: markLeft + 12, bottom: markTop + 33},
+		{left: markLeft + 32, top: markTop + 28, right: markLeft + 37, bottom: markTop + 29},
+		{left: markLeft + 37, top: markTop + 27, right: markLeft + 41, bottom: markTop + 28},
+		{left: markLeft + 32, top: markTop + 32, right: markLeft + 37, bottom: markTop + 33},
+		{left: markLeft + 37, top: markTop + 33, right: markLeft + 41, bottom: markTop + 34},
 	}
 
 	fillRect(hdc, leftEar, accent)
@@ -96,10 +98,31 @@ func (app *Application) paint(hwnd uintptr) {
 		fillRect(hdc, whisker, accent)
 	}
 
+	app.toggleButton = Rect{left: width - 56, top: 30, right: width - 28, bottom: 58}
+
+	if app.compact {
+		app.toggleButton = Rect{left: width - 36, top: 16, right: width - 8, bottom: 44}
+	}
+
+	fillRect(hdc, app.toggleButton, surfaceRaised)
+	fillRect(hdc, Rect{left: app.toggleButton.left + 8, top: app.toggleButton.top + 13, right: app.toggleButton.right - 8, bottom: app.toggleButton.bottom - 13}, foreground)
+
+	if app.compact {
+		app.button = Rect{}
+		app.logButton = Rect{}
+
+		fillRect(hdc, Rect{left: app.toggleButton.left + 13, top: app.toggleButton.top + 8, right: app.toggleButton.right - 13, bottom: app.toggleButton.bottom - 8}, foreground)
+
+		metric := Rect{left: 60, top: 8, right: width - 44, bottom: 52}
+		drawText(hdc, strconv.FormatUint(app.keyCount, 10), metric, 24, 600, foreground, dtVCenter|dtSingleLine|dtNoPrefix)
+
+		return
+	}
+
 	title := Rect{
 		left:   88,
 		top:    20,
-		right:  width - 180,
+		right:  width - 220,
 		bottom: 47,
 	}
 
@@ -116,7 +139,7 @@ func (app *Application) paint(hwnd uintptr) {
 	subtitle := Rect{
 		left:   88,
 		top:    47,
-		right:  width - 180,
+		right:  width - 220,
 		bottom: 70,
 	}
 
@@ -131,9 +154,9 @@ func (app *Application) paint(hwnd uintptr) {
 	)
 
 	state := Rect{
-		left:   width - 158,
+		left:   width - 198,
 		top:    30,
-		right:  width - 28,
+		right:  width - 68,
 		bottom: 58,
 	}
 
@@ -198,7 +221,7 @@ func (app *Application) paint(hwnd uintptr) {
 
 	drawText(
 		hdc,
-		fmt.Sprintf("%d", app.keyCount),
+		strconv.FormatUint(app.keyCount, 10),
 		metric,
 		27,
 		600,

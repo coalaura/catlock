@@ -108,6 +108,9 @@ const (
 	preferredWidth  int32 = 700
 	preferredHeight int32 = 350
 	preferredMargin int32 = 32
+	compactWidth    int32 = 196
+	compactHeight   int32 = 60
+	compactMargin   int32 = 8
 )
 
 type Point struct {
