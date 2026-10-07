@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	whKeyboardLL = 13
-	csDropShadow = 0x00020000
+	whKeyboardLL  = 13
+	llkhfInjected = 0x00000010
+	csDropShadow  = 0x00020000
 
 	wmDestroy       = 0x0002
 	wmPaint         = 0x000F

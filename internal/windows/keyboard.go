@@ -16,6 +16,15 @@ func keyboardProc(code int, wParam, lParam uintptr) uintptr {
 		return result
 	}
 
+	//lint:ignore unsafeptr Windows passes KBDLLHOOKSTRUCT through this callback parameter.
+	event := (*keyboardEvent)(unsafe.Pointer(lParam))
+
+	if event.flags&llkhfInjected != 0 {
+		result, _, _ := procCallNextHookEx.Call(0, uintptr(code), wParam, lParam)
+
+		return result
+	}
+
 	isDown := wParam == wmKeyDown || wParam == wmSysKeyDown
 	isUp := wParam == wmKeyUp || wParam == wmSysKeyUp
 
@@ -23,8 +32,6 @@ func keyboardProc(code int, wParam, lParam uintptr) uintptr {
 		return 1
 	}
 
-	//lint:ignore unsafeptr Windows passes KBDLLHOOKSTRUCT through this callback parameter.
-	event := (*keyboardEvent)(unsafe.Pointer(lParam))
 	virtualKey := event.virtualKey
 
 	var wasDown bool
